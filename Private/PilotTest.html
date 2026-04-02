@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>7-Minute Sequential Pilot Test</title>
+    <style>
+        :root { --primary: #0a84ff; --bg: #f2f2f7; --success: #30d158; --danger: #ff453a; --instrument-grey: #a0a0a0; --instrument-border: #707070; }
+        body { background: var(--bg); font-family: 'Segoe UI', Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        .corner-brand { position: absolute; top: 30px; right: 40px; font-weight: bold; color: #555; font-size: 20px; letter-spacing: 1px; }
+        #session-timer { position: fixed; bottom: 25px; right: 35px; font-weight: bold; color: #777; font-size: 18px; display: none; background: rgba(255,255,255,0.8); padding: 8px 20px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #overview-screen, #result-screen { width: 950px; background: white; padding: 60px; border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); color: #333; position: relative; }
+        .ov-title { font-size: 38px; font-weight: 800; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 40px; color: #1c1c1e; }
+        .ov-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 50px; }
+        .instruction-table td { padding: 15px 0; border-bottom: 1px solid #f0f0f0; vertical-align: top; font-size: 17px; }
+        .step-num { background: #000; color: #fff; width: 28px; height: 28px; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 14px; font-weight: bold; margin-right: 15px; }
+        
+        .example-card { border: 1.5px dashed #ccc; border-radius: 20px; padding: 40px; background: #fff; position: relative; }
+        .example-header { font-size: 28px; font-weight: 800; margin-bottom: 30px; color: #333; position: absolute; top: -50px; left: 0; }
+        .example-row { display: flex; justify-content: space-between; font-family: 'Courier New', monospace; font-size: 22px; margin-bottom: 12px; font-weight: bold; }
+        .ex-val { color: #30d158; }
+        .logic-line { border-top: 1px solid #eee; margin-top: 25px; padding-top: 20px; font-size: 18px; color: #333; }
+        .logic-bold { font-weight: bold; color: #555; }
+
+        #test-interface { display: none; text-align: center; }
+        .status-label { color: #ff4500; font-weight: bold; font-size: 22px; margin-bottom: 20px; height: 30px; }
+        .instrument-frame { background: var(--instrument-grey); padding: 15px; border-radius: 12px; border: 5px solid var(--instrument-border); display: inline-block; }
+        .black-screen { background: #000; border-radius: 5px; padding: 35px 50px; color: white; text-align: left; font-family: 'Courier New', monospace; min-width: 400px; }
+        .data-line { display: flex; margin: 18px 0; font-size: 26px; font-weight: bold; height: 40px; align-items: center; transition: opacity 0.3s; }
+        .param-label { width: 160px; } .param-key { width: 70px; color: #aaa; } .param-value { flex-grow: 1; text-align: right; letter-spacing: 2px; }
+        
+        #input-area { display: flex; flex-direction: column; align-items: center; margin-top: 30px; }
+        #user-input { background: #000; border: 2px solid #444; color: var(--success); font-size: 28px; padding: 15px; border-radius: 12px; width: 320px; height: 120px; text-align: center; outline: none; font-family: monospace; resize: none; overflow-y: hidden; }
+        #user-input:disabled { background: #1a1a1a; cursor: not-allowed; border-color: #333; }
+        .btn-main { border: none; padding: 20px 60px; border-radius: 12px; font-size: 20px; cursor: pointer; font-weight: 700; background: #1c1c1e; color: white; margin-top: 20px; }
+        .btn-confirm { background: var(--primary); padding: 15px 40px; margin-top: 15px; }
+        .btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+<div id="session-timer">420</div>
+
+<div id="overview-screen">
+    <div class="corner-brand">Aviator Amar</div>
+    <h1 class="ov-title">Memory Test Instructions</h1>
+    <div class="ov-grid">
+        <div class="instruction-section">
+            <table class="instruction-table">
+                <tr><td><span class="step-num">1</span></td><td><strong>Memorization:</strong> Study parameters for 6 seconds.</td></tr>
+                <tr><td><span class="step-num">2</span></td><td><strong>Recall:</strong> Type Value+Key. For multiple items, click <strong>Enter</strong> for a new line, then click <strong>Confirm</strong>.</td></tr>
+                <tr><td><span class="step-num">3</span></td><td><strong>Session:</strong> Test ends after 7 minutes or data ends.</td></tr>
+            </table>
+            <button class="btn-main" onclick="startPrepCountdown()">Start Test</button>
+        </div>
+        
+        <div style="margin-top: 50px;">
+            <div class="example-card">
+                <div class="example-header">Input Examples</div>
+                <div class="example-row"><span>Altitude (A): 32000</span><span class="ex-val">32000A</span></div>
+                <div class="example-row"><span>Speed (S): 250</span><span class="ex-val">250S</span></div>
+                <div class="example-row"><span>Heading (H): 090</span><span class="ex-val">090H</span></div>
+                <div class="example-row"><span>Radio (R): 11820</span><span class="ex-val">11820R</span></div>
+                <div class="logic-line">
+                    <span class="logic-bold">Logic:</span> Starts with 1 param, then 2, then randomizes.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="test-interface">
+    <div id="status" class="status-label">Ready?</div>
+    <div class="instrument-frame">
+        <div class="black-screen">
+            <div id="row-A" class="data-line"><span class="param-label" id="lab-A">Altitude</span><span class="param-key" id="key-A">(A)</span><span id="disp-A" class="param-value"></span></div>
+            <div id="row-S" class="data-line"><span class="param-label" id="lab-S">Speed</span><span class="param-key" id="key-S">(S)</span><span id="disp-S" class="param-value"></span></div>
+            <div id="row-H" class="data-line"><span class="param-label" id="lab-H">Heading</span><span class="param-key" id="key-H">(H)</span><span id="disp-H" class="param-value"></span></div>
+            <div id="row-R" class="data-line"><span class="param-label" id="lab-R">Radio</span><span class="param-key" id="key-R">(R)</span><span id="disp-R" class="param-value"></span></div>
+        </div>
+    </div>
+    <div id="input-area">
+        <textarea id="user-input" disabled autocomplete="off"></textarea>
+        <button id="confirm-btn" class="btn-main btn-confirm" disabled>Confirm</button>
+    </div>
+</div>
+
+<div id="result-screen" style="display: none; text-align: center;">
+    <h1 class="ov-title">Test Complete</h1>
+    <div style="font-size: 84px; font-weight: bold; color: var(--primary);" id="mark-display">0.0</div>
+    <div id="percent-display" style="font-size: 24px; color: #666; font-weight: bold; margin-bottom: 30px;">Accuracy: 0%</div>
+    <button class="btn-main" onclick="location.reload()">Restart Test</button>
+</div>
+
+<script>
+    const allSets = [
+        { 
+            A: [null, "3000", null, null, "4500", null, "11000", "13000", null, "22000", "26000", null, "30000", null, "28000", "24000", null, "15500", "12000", "10000", "8500", "6000", "3000", null],
+            S: [null, null, null, "250", null, null, "260", null, null, "300", "360", null, "330", "300", "285", "290", "285", null, "250", null, "220", null, "170", null],
+            H: ["240", null, null, "260", "270", null, null, "300", "310", null, null, "280", "250", "270", null, "295", "315", null, null, "290", "275", "210", "175", "330"],
+            R: [null, null, "13455", null, null, "12185", null, null, "12890", null, null, "12990", null, "12340", null, null, null, "13445", null, null, null, "12665", null, "12585"]
+        },
+        { 
+            A: [null,"2000",null,null,"3500",null,"11000","13000","22000",null,"26000",null,"3000",null,"28000","24000",null,"13500","12000","10000","7500","6000","3000","2500"],
+            H: ["140",null,null,"160","170",null,null,null,"310",null,null,"280","290","270",null,"250","215",null,null,null,"265","210","175","260"],
+            S: [null,null,null,"230",null,null,"260","200","300","340",null,"330","300","285","275","260",null,null,"250","290","220",null,"170",null],
+            R: [null,null,"12440",null,null,"13400",null,null,"12890",null,null,"12765",null,"12340",null,null,null,"13445",null,null,null,"12665",null,"11935"]
+        },
+        { 
+            A: [null,"2500",null,null,"3500",null,"12000","14000",null,null,"23000","26000",null,"30000",null,null,"28500",null,null,"15500","12000","11000","7500",null],
+            H: ["140",null,null,"210",null,null,"250",null,null,"320","360",null,"330","300","285","290",null,"250",null,"210",null,"170",null,null],
+            S: [null,null,null,"340","240","358",null,"200","240",null,null,"180","150","230",null,"295",null,"255",null,"075","060","095","033",null],
+            R: [null,null,"12275",null,null,"13185",null,null,"12905",null,null,"11852",null,"12340",null,null,"13445",null,"12005",null,"12665",null,null,"12352"]
+        }
+    ];
+
+    let seqPool = {};
+    let timeLeft = 420, currentGlobalIndex = 0;
+    let currentData = {}, targetKeys = [], respondedKeys = [];
+    let totalCorrect = 0, totalShown = 0, isRecall = false, sessionInterval, timerTimeout;
+
+    function startPrepCountdown() {
+        document.getElementById('overview-screen').style.display = 'none';
+        document.getElementById('test-interface').style.display = 'block';
+        
+        let prepTime = 10;
+        document.getElementById('status').innerText = `Test starts in ${prepTime}s`;
+        
+        let prepInterval = setInterval(() => {
+            prepTime--;
+            if (prepTime <= 0) {
+                clearInterval(prepInterval);
+                initTest();
+            } else {
+                document.getElementById('status').innerText = `Test starts in ${prepTime}s`;
+            }
+        }, 1000);
+    }
+
+    function initTest() {
+        seqPool = allSets[Math.floor(Math.random() * allSets.length)];
+        document.getElementById('session-timer').style.display = 'block';
+        startGlobalTimer();
+        nextRound();
+    }
+
+    function startGlobalTimer() {
+        sessionInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('session-timer').innerText = timeLeft;
+            if (timeLeft <= 0) { clearInterval(sessionInterval); showFinalResults(); }
+        }, 1000);
+    }
+
+    function nextRound() {
+        if (timeLeft <= 0 || currentGlobalIndex >= 24) { 
+            showFinalResults();
+            return; 
+        }
+
+        isRecall = false; respondedKeys = []; targetKeys = []; currentData = {};
+        
+        const inputField = document.getElementById('user-input');
+        inputField.disabled = true;
+        inputField.value = "";
+        document.getElementById('confirm-btn').disabled = true;
+
+        let idx = currentGlobalIndex;
+        let foundAny = false;
+
+        ['A', 'S', 'H', 'R'].forEach(k => {
+            let val = seqPool[k][idx];
+            let row = document.getElementById('row-' + k);
+            let disp = document.getElementById('disp-' + k);
+            row.style.opacity = "1";
+            disp.style.color = "white"; 
+
+            if (val !== null && val !== undefined) {
+                currentData[k] = val;
+                targetKeys.push(k);
+                disp.innerText = val;
+                foundAny = true;
+            } else {
+                disp.innerText = "";
+            }
+        });
+
+        if (!foundAny) { currentGlobalIndex++; nextRound(); return; }
+
+        currentGlobalIndex++;
+        document.getElementById('status').innerText = "Memorize the data below";
+        timerTimeout = setTimeout(startRecall, 6000); 
+    }
+
+    function startRecall() {
+        if (timeLeft <= 0) return;
+        isRecall = true;
+        totalShown += targetKeys.length;
+        document.getElementById('status').innerText = "Recall phase: Enter values";
+
+        ['A', 'S', 'H', 'R'].forEach(k => {
+            document.getElementById('disp-' + k).innerText = "";
+        });
+
+        const inputField = document.getElementById('user-input');
+        inputField.disabled = false;
+        inputField.focus();
+        document.getElementById('confirm-btn').disabled = false;
+    }
+
+    function handleConfirmClick() {
+        if (!isRecall) return;
+        
+        let lines = document.getElementById('user-input').value.toUpperCase().split('\n');
+        
+        lines.forEach(line => {
+            let match = line.trim().match(/^(\d+)([ASHR])$/);
+            if (match) {
+                let val = match[1], key = match[2];
+                if (targetKeys.includes(key) && !respondedKeys.includes(key)) {
+                    respondedKeys.push(key);
+                    if (val === currentData[key]) { 
+                        totalCorrect++; 
+                    }
+                }
+            }
+        });
+
+        isRecall = false;
+        nextRound();
+    }
+
+    document.getElementById('confirm-btn').addEventListener('click', handleConfirmClick);
+
+    function showFinalResults() {
+        clearInterval(sessionInterval);
+        clearTimeout(timerTimeout);
+        document.getElementById('test-interface').style.display = 'none';
+        document.getElementById('session-timer').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        let acc = totalShown > 0 ? (totalCorrect / totalShown) : 0;
+        document.getElementById('mark-display').innerText = (acc * 7).toFixed(1);
+        document.getElementById('percent-display').innerText = `Accuracy: ${Math.round(acc * 100)}%`;
+    }
+</script>
+</body>
+</html>

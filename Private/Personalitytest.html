@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personality Assessment</title>
+    <style>
+        :root {
+            --primary-bg: #ffffff;
+            --accent: #000000;
+            --text-main: #000000;
+            --text-muted: #4b5563;
+            --border: #e5e7eb;
+            --highlight: #f9fafb;
+        }
+
+        /* ===== FRONT-PAGE GLASS LOOK (NEW) ===== */
+        body.front-glass{
+            background:
+                radial-gradient(900px 600px at 10% 15%, rgba(59,130,246,0.25), transparent 60%),
+                radial-gradient(700px 500px at 85% 25%, rgba(34,197,94,0.18), transparent 60%),
+                radial-gradient(900px 700px at 70% 90%, rgba(245,158,11,0.20), transparent 55%),
+                linear-gradient(180deg, #0b1220 0%, #0f172a 45%, #0b1220 100%);
+        }
+        body.front-glass * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background-color: #f8f9fa; 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { 
+            max-width: 850px; 
+            width: 100%;
+            background: var(--primary-bg); 
+            padding: 60px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 30px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Glass card ONLY on front page (no impact on assessment UI) */
+        body.front-glass .container{
+            background: rgba(255,255,255,0.10);
+            border: 1px solid rgba(255,255,255,0.22);
+            box-shadow:
+                0 30px 80px rgba(0,0,0,0.35),
+                inset 0 1px 0 rgba(255,255,255,0.20);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+        body.front-glass .container::before{
+            content:"";
+            position:absolute;
+            inset:-2px;
+            background: linear-gradient(135deg,
+                rgba(255,255,255,0.28),
+                rgba(255,255,255,0.06),
+                rgba(255,255,255,0.18));
+            opacity: 0.55;
+            pointer-events:none;
+            mask: linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
+            -webkit-mask: linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
+            padding: 1px;
+            border-radius: 10px;
+        }
+        body.front-glass .container::after{
+            content:"";
+            position:absolute;
+            width: 480px;
+            height: 480px;
+            right: -180px;
+            top: -210px;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.00) 65%);
+            filter: blur(0px);
+            pointer-events:none;
+        }
+        body.front-glass #front-page{
+            color: rgba(255,255,255,0.92);
+        }
+        body.front-glass .section-label{
+            color: rgba(255,255,255,0.70);
+        }
+        body.front-glass .test-overview p{
+            color: rgba(255,255,255,0.88);
+        }
+        body.front-glass .detail-item p{
+            color: rgba(255,255,255,0.76);
+        }
+        body.front-glass .detail-item h4{
+            border-bottom-color: rgba(255,255,255,0.85);
+        }
+        body.front-glass .divider{
+            background: rgba(255,255,255,0.18);
+        }
+        body.front-glass .black-bar{
+            background: rgba(255,255,255,0.92);
+        }
+        body.front-glass .start-btn{
+            background: rgba(255,255,255,0.92);
+            color: #0b1220;
+            border-radius: 10px;
+            box-shadow: 0 14px 30px rgba(0,0,0,0.30);
+        }
+        body.front-glass .start-btn:hover{
+            letter-spacing: 2px;
+            transform: translateY(-1px);
+        }
+
+        /* ===== ORIGINAL UI (UNCHANGED) ===== */
+        #front-page { text-align: left; position: relative; z-index: 1; }
+        .header-section { margin-bottom: 40px; }
+        .assessment-title { 
+            font-size: 3rem; 
+            font-weight: 900; 
+            margin: 0; 
+            letter-spacing: -2px;
+            text-transform: uppercase;
+        }
+        .divider { width: 100%; height: 2px; background: #eee; margin: 25px 0; }
+        .black-bar { width: 80px; height: 8px; background: var(--accent); margin-bottom: 30px; }
+        .section-label { 
+            font-size: 0.85rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+            color: #888;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .test-overview { margin-bottom: 45px; }
+        .test-overview p { 
+            font-size: 1.15rem; 
+            line-height: 1.7; 
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .detail-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        .detail-item h4 { margin: 0 0 10px 0; font-size: 1rem; border-bottom: 2px solid #000; display: inline-block; padding-bottom: 2px; }
+        .detail-item p { margin: 0; font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+
+        #assessment-container { display: none; position: relative; z-index: 1; }
+        .progress-meta { margin-bottom: 10px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; }
+        .progress-bar { height: 4px; background: #eee; margin-bottom: 50px; }
+        #fill { height: 100%; background: var(--accent); width: 0%; transition: 0.3s; }
+
+        .option { 
+            display: flex; 
+            align-items: center; 
+            padding: 25px; 
+            margin: 15px 0; 
+            border: 1px solid var(--border); 
+            cursor: pointer; 
+            transition: 0.2s; 
+            font-size: 1.1rem;
+            background: #fff;
+        }
+        .option:hover { background: #fcfcfc; border-color: #000; }
+        .option.selected { background: #fff; border-color: #000; border-width: 2px; padding: 24px; }
+        
+        .check-box { 
+            height: 20px; width: 20px; border: 1px solid #000; margin-right: 20px; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .option.selected .check-box::after { content: ""; width: 12px; height: 12px; background: #000; }
+
+        .btn { 
+            padding: 20px 40px; border: none; font-size: 1rem; font-weight: 800; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .start-btn { background: var(--accent); color: white; width: 100%; margin-top: 20px; transition: 0.3s; }
+        .start-btn:hover { letter-spacing: 2px; }
+        
+        .controls { display: flex; gap: 10px; margin-top: 50px; }
+        .nav-btn { background: #fff; color: #000; border: 1px solid #000; flex: 1; }
+        .nav-btn:disabled { color: #ccc; border-color: #ccc; }
+        .submit-btn { background: #000; color: #fff; flex: 1; display: none; }
+
+        #results { display: none; text-align: center; position: relative; z-index: 1; }
+        .percentage-circle {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin: 40px 0;
+            color: var(--accent);
+        }
+        .trait-breakdown { text-align: left; margin-top: 40px; }
+    </style>
+</head>
+<body class="front-glass">
+
+<div class="container">
+    <div id="front-page">
+        <div class="header-section">
+           
+            <h1 class="assessment-title">Personality Assessment</h1>
+            <div class="black-bar"></div>
+        </div>
+
+        <div class="test-overview">
+            <span class="section-label">Test Overview</span>
+            <p>Welcome to the Professional Personality Assessment. This evaluation is designed to map your core behavioral traits and work-style preferences using a validated forced-choice methodology.</p>
+            <p>Unlike standard questionnaires, this test requires you to weigh two distinct statements and select the one that most closely aligns with your natural tendencies. There are no "right" or "wrong" answers—only indicators of your unique professional profile.</p>
+        </div>
+
+        <span class="section-label">Assessment Details</span>
+        <div class="detail-block">
+            <div class="detail-item">
+                <h4>Objective</h4>
+                <p>To identify primary drivers in influence, teamwork, discipline, and situational adaptability.</p>
+            </div>
+            
+            <div class="detail-item">
+                <h4>Structure</h4>
+                <p>225 comparative pairs presented sequentially. You must complete all items for a valid profile.</p>
+            </div>
+            
+        </div>
+
+        <button class="btn start-btn" onclick="startAssessment()">Enter Assessment</button>
+    </div>
+
+    <div id="assessment-container">
+        <div class="progress-meta" id="progress-text">Item 1 / 225</div>
+        <div class="progress-bar"><div id="fill"></div></div>
+        <div id="question-viewer"></div>
+        <div class="controls">
+            <button id="prevBtn" class="btn nav-btn" onclick="changeQuestion(-1)">Previous</button>
+            <button id="nextBtn" class="btn nav-btn" onclick="changeQuestion(1)">Next</button>
+            <button id="submitBtn" class="btn submit-btn" onclick="calculate()">Generate Profile</button>
+        </div>
+    </div>
+
+    <div id="results">
+        <h2 style="font-size: 2rem; text-transform: uppercase; letter-spacing: -1px;">Overall Compatibility</h2>
+        <div class="divider"></div>
+
+        <!-- NO PERCENTAGE DISPLAY -->
+        <div class="percentage-circle" id="overall-percent">0%</div>
+
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Your professional profile score based on the cumulative parameter analysis.</p>
+        
+        <div class="trait-breakdown">
+            <span class="section-label">Trait Breakdown</span>
+            <div id="score-output"></div>
+        </div>
+        
+        <button class="btn start-btn" onclick="location.reload()" style="margin-top: 50px;">Restart Assessment</button>
+    </div>
+</div>
+
+<script>
+/* ===== 225 PAIRS (UNCHANGED) ===== */
+const data = [
+["Other people can always count on me.", "I enjoy influencing other people's opinions."],
+    ["Working together comes easily to me.", "I am known as someone who can easily persuade others."],
+    ["If someone insults me, I do not take it lying down.", "I enjoy persuading others."],
+    ["I always aim to achieve the best results and to reach the top.", "In discussions I often try to get my point across."],
+    ["I am known to be precise and careful.", "I like the challenge of persuading others."],
+    ["I am very good at persuading others.", "I enjoy being part of a team."],
+    ["I like to feel free and independent.", "I much prefer working in a team than on my own."],
+    ["If needs be, I am good at sticking up for myself.", "I perform best in a team."],
+    ["At work I am very demanding of myself.", "Working in a team brings out the best in me."],
+    ["I always neatly file away the documents on my desk.", "I prefer working in a team."],
+    ["I am known as someone who can easily persuade others.", "I do not tolerate being lied to."],
+    ["I perform best in a team.", "I am well able to stand up for myself."],
+    ["I am good at making small-talk.", "I do not shy away from a conflict."],
+    ["I aim for the highest goal whatever the effort.", "If needs be, I am good at sticking up for myself."],
+    ["Order and regularity are my priorities.", "I am usually blunt in what I say."],
+    ["In discussions my arguments usually carry much weight.", "I always set high standards for myself."],
+    ["I enjoy working with others.", "At work I strive for the best results."],
+    ["If someone upsets me, I say so.", "Delivering good results is very important to me."],
+    ["People think I am confident.", "I am very goal-oriented."],
+    ["On my desk everything has its own place.", "At work I am very demanding of myself."],
+    ["I enjoy taking part in debate.", "I think it is important to work neatly."],
+    ["Given a choice, I would prefer to work in a team as opposed to on my own.", "When I have finished a chore I like to tidy up immediately."],
+    ["I'm not a pushover.", "I work best in a neat and tidy environment."],
+    ["I want to set myself apart from others by attaining good results.", "I am known to be precise and careful."],
+    ["I am known as a go-getter.", "It is important to me to work in an accurate and orderly fashion."],
+    ["If there is a difference in opinion, I am good at persuading others.", "I rarely react immediately or impulsively."],
+    ["Cooperating with other people enables me to achieve optimal results.", "I am known for being cautious."],
+    ["If needed, I can take firm action.", "I am very self-controlled."],
+    ["At work I want to be one of the best.", "I am generally very disciplined."],
+    ["I think it is important to work meticulously and accurately.", "I am a patient person."],
+    ["I enjoy influencing other people's opinions.", "I prefer varied tasks to routine work."],
+    ["I enjoy being part of a team.", "I like making new contacts."],
+    ["I do not tolerate being lied to.", "I am often looking for variation and challenge."],
+    ["I always set high standards for myself.", "I dislike routine."],
+    ["I think it is important to work neatly.", "I am not the kind of person who likes doing monotonous work for a long time."],
+    ["I enjoy persuading others.", "I function well under high pressure."],
+    ["I much prefer working in a team than on my own.", "I rarely make mistakes in critical situations."],
+    ["I am well able to stand up for myself.", "The pressure of a difficult test or exam does not have a negative influence on my performance."],
+    ["At work I strive for the best results.", "I operate best at work when I am under pressure."],
+    ["When I have finished a chore I like to tidy up immediately.", "I am not easily disappointed or discouraged."],
+    ["In discussions I often try to get my point across.", "I think it is important to influence decision of others."],
+    ["Working in a team brings out the best in me.", "Others often put me in charge."],
+    ["I do not shy away from a conflict.", "I would like to fill an executive position in an organization."],
+    ["Delivering good results is very important to me.", "I like taking the executive role in meetings."],
+    ["I work best in a neat and tidy environment.", "A managerial position suits me well."],
+    ["I like the challenge of persuading others.", "I enjoy reflecting on what people do and why they do it."],
+    ["I prefer working in a team.", "I often try to put myself in someone else's place to work out what motivates him or her."],
+    ["I am usually blunt in what I say.", "I often have a good understanding of the concerns of others."],
+    ["I am very goal-oriented.", "I like to think about the experiences of others."],
+    ["I am known to be precise and careful.", "I enjoy putting myself in the position of others."],
+    ["I am very good at persuading others.", "I find it satisfying to mean something to other."],
+    ["Working together comes easily to me.", "I am known as a thoughtful and helpful person."],
+    ["If someone insults me, I do not take it lying down.", "I do not hesitate to help others if they need me."],
+    ["I always aim to achieve the best results and to reach the top.", "I am a helpful person."],
+    ["It is important to me to work in an accurate and orderly fashion.", "Other people can always count on me."],
+    ["I am known as someone who can easily persuade others.", "I prefer making decisions independently."],
+    ["I perform best in a team.", "I like doing thing in my own way."],
+    ["If needs be, I am good at sticking up for myself.", "I prefer to work independently of others."],
+    ["At work I am very demanding of myself.", "I like to go my own way."],
+    ["I always neatly file away the documents on my desk.", "If I have a job to do, I likely to be able to do that in my own way."],
+    ["In discussion my arguments usually carry much weight.", "A profession which entails meeting strangers and which required communication skills would suit me."],
+    ["I enjoy working with others.", "I make contact with strangers easily."],
+    ["If someone upsets me, I say so.", "Giving a presentation to a group of strangers comes easily to me."],
+    ["I am for the highest goal whatever the effort.", "I do not feel inhibited when making new contacts."],
+    ["Order and regularity are my priorities.", "I do not fear going up to people I do not know."],
+    ["I enjoy taking part in debate.", "I usually trust people at face value."],
+    ["Given a choice, I would prefer to work in a team as opposed to on my own.", "I am not easily offended."],
+    ["I'm not a pushover.", "I am good at rationalizing and overcoming disappointments."],
+    ["I want to set myself apart from others by attaining good results.", "I am not a changeable person."],
+    ["On my desk everything has its own place.", "I am not easily discouraged by setbacks."],
+    ["If there is a difference in opinion, I am good at persuading others.", "I like the challenge of solving a complex problem."],
+    ["Cooperating with other people enables me to achieve optimal results.", "I do not give up on something."],
+    ["If needed, I can take firm action.", "If I start something I have to finish it, no matter what."],
+    ["At work I want to be one of the best.", "I am someone who persists in task and does not easily let go."],
+    ["I am a patient person.", "I am very good at persuading others."],
+    ["I think it is important to work meticulously and accurately.", "I dislike being interrupted at work."],
+    ["I am not the kind of person who likes doing monotonous work for a long time.", "I am known as someone who can easily persuade others."],
+    ["I am not easily disappointed or discouraged.", "In discussions my arguments usually carry much weight."],
+    ["A managerial position suits me well.", "I enjoy taking part in debate."],
+    ["I enjoy putting myself in the position of others.", "If there is a difference in opinion, I am good at persuading others."],
+    ["People can't make me angry easily.", "Working together comes easily to me."],
+    ["I am always up for something new.", "I perform best in a team."],
+    ["When a deadline approaches others panic sooner than I.", "I enjoy working with others."],
+    ["In groups I gladly take control.", "Given a choice, I would prefer to work in a team as opposed to on my own."],
+    ["I find it interesting to find out what motivates others.", "Cooperating with other people enables me to achieve optimal results."],
+    ["I rarely act on impulse.", "If someone insults me, I do not take it lying down."],
+    ["I like meeting new people.", "If needs be, I am good at sticking up for myself."],
+    ["I am positively influenced by pressure.", "If someone upsets me, I say so."],
+    ["I feel better in an executive position.", "I am not a pushover."],
+    ["I am good at empathizing.", "If needed, I can take firm action."],
+    ["I am known as a calm person.", "I aim to achieve the best results."],
+    ["I enjoy experiencing new things.", "At work I am demanding of myself."],
+    ["People think I am immune to stress.", "I aim for the highest goal."],
+    ["I like being on committees.", "I want to set myself apart with good results."],
+    ["I find it interesting to imagine myself in others' positions.", "At work I want to be the best."],
+    ["I always act in a deliberate way.", "It is important to work accurately."],
+    ["I do not like routine work.", "I always neatly file documents."],
+    ["I can handle stress well.", "Order and regularity are priorities."],
+    ["In a team I like to take charge.", "On my desk everything has its place."],
+    ["I can easily empathize.", "I think it is important to work meticulously."],
+    ["If there is a difference in opinion, I am good at persuading others.", "I rarely react immediately."],
+    ["I prefer varied tasks to routine.", "People can't make me angry easily."],
+    ["I function well under high pressure.", "I rarely act on impulse."],
+    ["I think it is important to influence decisions of others.", "I am known as a calm person."],
+    ["I enjoyed reflecting on what people do.", "I always act in a deliberate way."],
+    ["I rarely react immediately or impulsively.", "I am always up for something new."],
+    ["I enjoy being part of a team.", "I like making new contacts."],
+    ["I rarely make mistakes in critical situations.", "I like meeting new people."],
+    ["Others often put me in charge.", "I enjoy experiencing new things."],
+    ["I often try to put myself in someone else's place.", "I do not like routine work."],
+    ["I am known for being cautious.", "When a deadline approaches others panic sooner than I."],
+    ["I like making new contacts.", "I am positively influenced by a certain amount of pressure."],
+    ["I am well able to stand up for myself.", "The pressure of a difficult test does not have a negative influence."],
+    ["I would like to fill an executive position.", "People think I am immune to stress."],
+    ["I often have a good understanding of concerns of others.", "I can handle stress well."],
+    ["I am very self-controlled.", "In groups I gladly take control."],
+    ["I am often looking for variation and challenge.", "I feel better in an executive position."],
+    ["The pressure of a test does not influence my performance.", "I like being on the committee of a club."],
+    ["Delivering good results is very important to me.", "I like taking the executive role in meetings."],
+    ["I find it interesting to imagine myself in the same as others.", "A managerial position suits me well."],
+    ["I am generally very disciplined.", "I find it interesting to find out what motivates others."],
+    ["I dislike routine.", "I am good at empathizing with others."],
+    ["I operate best at work when I am under pressure.", "I find it interesting to imagine myself in the same as others."],
+    ["I like taking the executive role in meetings.", "I can easily empathize with others."],
+    ["I am known to be precise and careful.", "I enjoy putting myself in the position of others."],
+    ["I am a patient person.", "I willingly comfort people when they have problems."],
+    ["I am not the kind of person who likes doing monotonous work for a long time.", "I enjoy being able to do something for someone else."],
+    ["I am not easily disappointed or discouraged.", "I like to be helpful."],
+    ["A managerial position suits me well.", "I tend to help other people."],
+    ["I enjoy putting myself in the position of others.", "I find it satisfying to mean something to others."],
+    ["People can't make me angry easily.", "I like to feel free and independent."],
+    ["I am always up for something new.", "I do not really like obligations and rules."],
+    ["When a deadline approaches others panic sooner than I.", "I like to decide for myself on how to plan my work."],
+    ["In group I gladly take control.", "When I have a task to perform I like to be 'my own master'."],
+    ["I find it interesting to find out what motivates others.", "I prefer making decisions independently."],
+    ["I rarely act on impulse.", "I am known as an extroverted and spontaneous person."],
+    ["I like meeting new people.", "I am good at making small-talk."],
+    ["I am positively influenced by a certain amount of pressure.", "Making new contacts energizes and inspires me."],
+    ["I feel better in an executive position than in that of a supporting role.", "I rarely feel inhibited or shy in a large group."],
+    ["I am good at empathizing with others.", "A profession which entails meeting strangers would suit me."],
+    ["I am known as a calm and level-headed person.", "I am generally relaxed and confident."],
+    ["People think I am immune to stress.", "People think I am confident."],
+    ["I enjoy experiencing new things.", "It takes a lot to upset me."],
+    ["I like being on the committee of a club or an association.", "If I am mocked it does not affect my self-esteem."],
+    ["I find it interesting to imagine in the same position as others.", "I usually trust people at face value."],
+    ["I always act in a deliberate and well thought-out way.", "I do not give up until I have reached my goal."],
+    ["I do not like routine work; I always look for variation and new things.", "I always finish one task before beginning another."],
+    ["I can handle stress well.", "If I am in the middle of something I like to keep at it and not give up."],
+    ["In a team I like to take charge.", "I am known as a go-getter."],
+    ["I can easily empathize with others.", "I like the challenge of solving a complex problem."],
+    ["Other people can always count on me.", "I enjoy influencing other people's opinions."],
+    ["If I have a job to do, I like to be able to do that in my own way.", "I enjoy persuading others."],
+    ["I do not fear going up to people I do not know.", "In discussions I often try to get my points across."],
+    ["I am not easily discouraged by setbacks.", "I like the challenge of persuading others."],
+    ["I dislike being interrupted at work.", "I am very good at persuading others."],
+    ["I willingly comfort people when they are having problems.", "I enjoy being part of a team."],
+    ["I like to feel free and independent.", "I much prefer working in a team than on my own."],
+    ["I am known as an extroverted and spontaneous person.", "Working in a team brings out the best in me."],
+    ["I am generally relaxed and confident.", "I prefer working in a team."],
+    ["I do not give up until I have reached my goal.", "Working together comes easily to me."],
+    ["I enjoy being able to do something for someone else.", "I do not tolerate being lied to."],
+    ["I do not really like obligations and rules.", "I am well able to stand up for myself."],
+    ["I am good at making small-talk.", "I do not shy away from a conflict."],
+    ["It takes a lot to upset me.", "I am usually blunt in what I say."],
+    ["I always finish one task before beginning another.", "If someone insults me, I do not take it lying down."],
+    ["I like to be helpful.", "I always set high standards for myself."],
+    ["I like to decide for myself on how to plan my work.", "At work I strive for the best results."],
+    ["Making new contacts energizes and inspires me.", "Delivering good results is very important to me."],
+    ["People think I am confident.", "I am very goal-oriented."],
+    ["If I am in the middle of something I like to keep at it and not give up.", "I always aim to achieve the results and to reach the top."],
+    ["I tend to help other people.", "I think it is important to work neatly."],
+    ["When I have a task to perform I like to be my own master.", "When I have finished a chore I like to tidy up immediately."],
+    ["I rarely feel inhibited or shy in a large group.", "I work best in a neat and tidy environment."],
+    ["If I am mocked it does not affect my self-esteem.", "I am known to be precise and careful."],
+    ["I am known as a go-getter.", "It is important to me to work in an accurate and orderly fashion."],
+    ["I find it satisfying to mean something to others.", "I rarely react immediately or impulsively."],
+    ["I prefer making decisions independently.", "I am known for being cautious."],
+    ["A profession which entails meeting strangers would suit me.", "I am very self-controlled."],
+    ["I usually trust people at value.", "I am generally very disciplined."],
+    ["I like the challenge of solving a complex problem.", "I am a patient person."],
+    ["I am known as a thoughtful and helpful person.", "I prefer varied tasks to routine work."],
+    ["I like doing things in my own way.", "I like making new contacts."],
+    ["I make contact with strangers easily.", "I am often looking for variation and challenge."],
+    ["I am not easily offended.", "I dislike routine."],
+    ["I do not give up on something.", "I am not the kind of person who likes doing monotonous work for a long time."],
+    ["I do not hesitate to help others if they need me.", "I function well under high pressure."],
+    ["I prefer to work independently of others.", "I rarely make mistakes in critical situations."],
+    ["Giving a presentation to a group of strangers comes easily to me.", "The pressure of a difficult test or exam does not have a negative influence on my performance."],
+    ["I am good at rationalizing and overcoming disappointments.", "I operate best at work when I am under pressure."],
+    ["If I started something I have to finish it, no matter what.", "I am not easily disappointed or discouraged."],
+    ["I am a helpful person.", "I think it is important to influence decisions of others."],
+    ["I like to go my own way.", "Other often put me in charge."],
+    ["I do not feel inhibited when making new contacts.", "I would like to fill an executive position in an organisation."],
+    ["I am not a changeable person.", "I like taking the executive role in meetings."],
+    ["I am someone who persists in a task and does not easily let go.", "A managerial position suits me well."],
+    ["Other people can always count on me.", "I enjoy reflecting on what people do and why they do it."],
+    ["If I have a job to do, I like to be able to do that in my own way.", "I often try to put myself in someone else's place to work out what motivates him or her."],
+    ["I do not fear going up to people I do not know.", "I often have a good understanding of the concerns of others."],
+    ["I am not easily discouraged by setbacks.", "I like to think about the experiences of others."],
+    ["I dislike being interrupted at work.", "I enjoy putting myself in the position of others."],
+    ["I am very good at persuading others.", "I find it satisfying to mean something to other."],
+    ["I like to feel free and independent.", "I am known as a thoughtful and helpful person."],
+    ["I am known as an extroverted and spontaneous person.", "I do not hesitate to help others if they need me."],
+    ["I am generally relaxed and confident.", "I am a helpful person."],
+    ["I do not give up untill reached my goal.", "Other people can always count on me."],
+    ["I willingly comfort people when they have problems.", "I like to feel free and independent."],
+    ["I perform best in a team.", "I like doing things in my own way."],
+    ["I am good at making small-talk.", "I prefer to work independently of others."],
+    ["It takes a lot to upset me.", "I like to go my own way."],
+    ["I always finish one task before beginning another.", "If I have a job to do, I like to be able to do that in my own way."],
+    ["I enjoy being able to do something for someone else.", "I make contact with strangers easily."],
+    ["I do not really like obligation and rules.", "I am known as an extroverted and spontaneous person."],
+    ["If someone upsets me, I say so.", "Giving a presentation to a group of strangers comes easily to me."],
+    ["People think I am confident.", "I do not feel inhibited when making new contacts."],
+    ["If I am in the middle of something I like to keep at it and not give up.", "I do not fear going up to people I do not know."],
+    ["I like to be helpful.", "I am not easily offended."],
+    ["I like to decide for myself on how to plan my work.", "I am good at rationalizing and overcoming disappointments."],
+    ["Making new contacts energizes and inspires me.", "I am generally relaxed and confident."],
+    ["I want to set myself apart from others by attaining good results.", "I am not a changeable person."],
+    ["I am known as a go-getter.", "I am not easily discouraged by setbacks."],
+    ["I tend to help other people.", "I do not give up on something."],
+    ["When I have a task to perform I like to be 'my own master'.", "If I start something I have to finish it, no matter what."],
+    ["I rarely feel inhibited or shy in a large group.", "I am someone who persists in a task and does not easily let go."],
+    ["If I am mocked it does not affect my self-esteem.", "I do not give up until I have reached my goal."],
+    ["I think it is important to work meticulously and accurately.", "I dislike being interrupted at work."]
+];
+let currentIdx = 0;
+const userAnswers = new Array(data.length).fill(null);
+
+function startAssessment() {
+    // switch off front glass styling for the rest of the app (assessment/results stay the same)
+    document.body.classList.remove('front-glass');
+
+    document.getElementById('front-page').style.display = 'none';
+    document.getElementById('assessment-container').style.display = 'block';
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const total = data.length;
+    document.getElementById('progress-text').innerText = `Item ${currentIdx + 1} / ${total}`;
+    document.getElementById('fill').style.width = ((currentIdx + 1) / total * 100) + '%';
+    
+    const pair = data[currentIdx];
+    const container = document.getElementById('question-viewer');
+    const selection = userAnswers[currentIdx];
+
+    container.innerHTML = `
+        <div class="option ${selection === 'A' ? 'selected' : ''}" onclick="select('A')">
+            <div class="check-box"></div>
+            <span>${pair[0]}</span>
+        </div>
+        <div class="option ${selection === 'B' ? 'selected' : ''}" onclick="select('B')">
+            <div class="check-box"></div>
+            <span>${pair[1]}</span>
+        </div>
+    `;
+
+    document.getElementById('prevBtn').disabled = (currentIdx === 0);
+    if (currentIdx === total - 1) {
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('submitBtn').style.display = 'block';
+    } else {
+        document.getElementById('nextBtn').style.display = 'block';
+        document.getElementById('submitBtn').style.display = 'none';
+    }
+}
+
+function select(val) {
+    userAnswers[currentIdx] = val;
+    renderQuestion();
+}
+
+function changeQuestion(step) {
+    if (step === 1 && userAnswers[currentIdx] === null) {
+        alert("Please make a selection to proceed.");
+        return;
+    }
+    currentIdx += step;
+    renderQuestion();
+    window.scrollTo(0, 0);
+}
+
+/* ===========================
+   SCORING + COLOUR-GRADED BARS
+   + FINAL CONCERN CLASSIFICATION
+   + NO PERCENTAGE DISPLAY
+   =========================== */
+function calculate() {
+    const firstMissing = userAnswers.findIndex(v => v === null);
+    if (firstMissing !== -1) {
+        alert(`Please answer all items before generating your profile.\nMissing item: ${firstMissing + 1} / ${data.length}`);
+        return;
+    }
+
+    // Hide percentage circle (no percentage shown)
+    const percentEl = document.getElementById('overall-percent');
+    if (percentEl) percentEl.style.display = 'none';
+
+    const TRAITS_LEFT = [
+        "Persuasiveness","Assertiveness","Accuracy","Need for variation","Dominance","Helpfulness","Openness","Perseverance"
+    ];
+    const TRAITS_RIGHT = [
+        "Teamwork","Ambition","Impulse control","Stress tolerance","Empathy","Autonomy","Resilience"
+    ];
+
+    const keyMap = {
+        "Persuasiveness":"Persuasiveness",
+        "Assertiveness":"Assertiveness",
+        "Accuracy":"Accuracy",
+        "Need for variation":"NeedForVariation",
+        "Dominance":"Dominance",
+        "Helpfulness":"Helpfulness",
+        "Openness":"Openness",
+        "Perseverance":"Perseverance",
+        "Teamwork":"Teamwork",
+        "Ambition":"Ambition",
+        "Impulse control":"ImpulseControl",
+        "Stress tolerance":"StressTolerance",
+        "Empathy":"Empathy",
+        "Autonomy":"Autonomy",
+        "Resilience":"Resilience"
+    };
+
+    const traitKeys = Object.values(keyMap);
+
+    const traitKeywords = {
+        Persuasiveness: ["persuad","influenc","convinc","get my point","arguments","debate","presentation","communicat"],
+        Assertiveness: ["stand up","pushover","conflict","insult","blunt","lying down","shy away","firm action"],
+        Accuracy: ["precise","careful","accurate","order","orderly","neat","tidy","meticulous","file","documents"],
+        NeedForVariation: ["variation","new","challenge","routine","monotonous","new things"],
+        Dominance: ["in charge","take control","executive","managerial","lead","take charge","manager"],
+        Helpfulness: ["help","helpful","comfort","mean something","count on me","support"],
+        Openness: ["new contacts","meeting","strangers","make contact","extrovert","small-talk","inhibited","shy"],
+        Perseverance: ["finish","do not give up","dont give up","persist","keep at it","setbacks","no matter what","have to finish"],
+        Teamwork: ["team","together","cooperat","working with others","part of a team"],
+        Ambition: ["best","top","highest goal","goal-oriented","results","one of the best","reach the top","strive"],
+        ImpulseControl: ["self-controlled","disciplined","deliberate","rarely act on impulse","patient","cautious","impulsive"],
+        StressTolerance: ["pressure","stress","deadline","panic","exam","test","critical situations"],
+        Empathy: ["put myself","understanding","concerns of others","motivates","experiences of others","empath"],
+        Autonomy: ["independent","own way","go my own way","free","my own master","decide for myself"],
+        Resilience: ["not easily discouraged","not easily disappointed","not easily offended","immune to stress","takes a lot to upset","mocked"]
+    };
+
+    function detectTraits(text) {
+        const lower = (text || "").toLowerCase();
+        const found = new Set();
+        for (const [trait, keys] of Object.entries(traitKeywords)) {
+            for (const k of keys) {
+                if (lower.includes(k)) { found.add(trait); break; }
+            }
+        }
+        return Array.from(found);
+    }
+
+    const traitMax = {};
+    traitKeys.forEach(k => traitMax[k] = 0);
+
+    data.forEach(pair => {
+        pair.forEach(stmt => {
+            detectTraits(stmt).forEach(tr => {
+                if (traitMax[tr] !== undefined) traitMax[tr] += 1;
+            });
+        });
+    });
+
+    const raw = {};
+    traitKeys.forEach(k => raw[k] = 0);
+
+    userAnswers.forEach((val, i) => {
+        const chosen = (val === "A") ? data[i][0] : data[i][1];
+        detectTraits(chosen).forEach(tr => {
+            if (raw[tr] !== undefined) raw[tr] += 1;
+        });
+    });
+
+    function toScale1to9(v, max) {
+        if (!max || max <= 0) return 5;
+        const x = Math.round((v / max) * 8) + 1;
+        return Math.min(9, Math.max(1, x));
+    }
+
+    const scaled = {};
+    traitKeys.forEach(k => scaled[k] = toScale1to9(raw[k], traitMax[k]));
+
+    const competencies = {
+        "1. Personal Stability": Math.round((scaled.StressTolerance + scaled.Resilience + scaled.ImpulseControl) / 3),
+        "2. Conscientiousness": Math.round((scaled.Accuracy + scaled.Perseverance) / 2),
+        "3. Leadership": Math.round((scaled.Dominance + scaled.Ambition + scaled.Assertiveness + scaled.Persuasiveness) / 4),
+        "4. Service Orientation": Math.round((scaled.Helpfulness + scaled.Empathy) / 2),
+        "5. Sociability": Math.round((scaled.Openness + scaled.Persuasiveness) / 2),
+        "6. Team Orientation": scaled.Teamwork,
+        "7. Communication": scaled.Persuasiveness,
+        "8. Decision Making Process": Math.round((scaled.ImpulseControl + scaled.Accuracy) / 2),
+        "9. Executive Orientation": Math.round((scaled.Dominance + scaled.Ambition) / 2)
+    };
+
+    function bar9(val) {
+        const grade = ["#B91C1C","#DC2626","#F97316","#FB923C","#FACC15","#A3E635","#22C55E","#16A34A","#14532D"];
+        let segs = "";
+        for (let i = 1; i <= 9; i++) {
+            const filled = i <= val;
+            const fillColor = grade[i - 1];
+            segs += `<span style="flex:1;height:10px;border-radius:2px;background:${filled ? fillColor : '#e5e7eb'};"></span>`;
+        }
+        return `<div style="display:flex;gap:4px;width:260px;align-items:center;">${segs}</div>`;
+    }
+
+    function row(label, val) {
+        return `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #eee;">
+                <div style="min-width:240px;font-weight:600;">${label}</div>
+                ${bar9(val)}
+                <div style="min-width:44px;text-align:right;font-weight:800;">${val}/9</div>
+            </div>
+        `;
+    }
+
+    const output = document.getElementById('score-output');
+
+    let htmlOut = "";
+    htmlOut += `<div style="margin-bottom:14px;"><span class="section-label">A. Personality Traits (1-9 Scale)</span></div>`;
+    TRAITS_LEFT.forEach(lbl => { htmlOut += row(lbl, scaled[keyMap[lbl]]); });
+    TRAITS_RIGHT.forEach(lbl => { htmlOut += row(lbl, scaled[keyMap[lbl]]); });
+
+    htmlOut += `<div style="margin-top:28px;margin-bottom:14px;"><span class="section-label">B. Competencies Overview</span></div>`;
+    Object.entries(competencies).forEach(([lbl, val]) => { htmlOut += row(lbl, val); });
+
+    const personalStability = competencies["1. Personal Stability"];
+    const conscientiousness = competencies["2. Conscientiousness"];
+    const leadership = competencies["3. Leadership"];
+
+    let concern = "No significant concern";
+    if (personalStability <= 3 || conscientiousness <= 3) concern = "Serious concern";
+    else if (personalStability <= 5 || conscientiousness <= 5 || leadership <= 4) concern = "Minor concern";
+
+    htmlOut += `
+        <div style="margin-top:28px;">
+            <span class="section-label">C. Assessment Result</span>
+            <div style="padding:16px;border:1px solid #eee;background:#fafafa;font-weight:900;letter-spacing:0.2px;color:#111;">
+                ${concern}
+            </div>
+        </div>
+    `;
+
+    output.innerHTML = htmlOut;
+
+    document.getElementById('assessment-container').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+}
+</script>
+
+</body>
+</html>

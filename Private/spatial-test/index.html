@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Orientation – Spatial Awareness Test</title>
+<style>
+  body { margin:0; font-family: Arial, sans-serif; background:#eef5ff; }
+  .container { width:1100px; margin:20px auto; background:#fff; padding:15px; box-shadow:0 0 10px rgba(0,0,0,0.2); }
+  .hidden { display:none; }
+
+  .header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #c9ddf2; padding-bottom:8px; }
+  .title { font-size:22px; font-weight:bold; color:#1c4fa1; }
+  .timer { background:#ffe100; padding:6px 12px; font-weight:bold; border-radius:4px; }
+
+  .front { text-align:center; padding:20px 10px; }
+  .front h1 { color:#1c4fa1; margin-bottom:10px; }
+  .front .card {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px auto;
+    max-width: 900px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    text-align:left;
+  }
+  .start-btn { padding:12px 26px; font-size:16px; background:#1c4fa1; color:#fff; border:none; border-radius:8px; cursor:pointer; }
+
+  .question { text-align:center; margin:10px 0; }
+  .img-wrap { position: relative; display:inline-block; }
+  .question img { 
+    max-width: 1000px; 
+    max-height: 560px; 
+    width: 100%; 
+    height: auto;
+    border: 1px solid #ccc; object-fit: contain; background:#f8fbff;
+  }
+  .img-badge {
+    position:absolute; top:10px; left:10px;
+    background: rgba(28,79,161,0.9);
+    color:#fff; font-weight:bold; padding:8px 12px; border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.3);
+    font-size:15px;
+  }
+
+  .answer-box { text-align:center; margin:12px 0; }
+  .answer-box input {
+    width: 140px; padding: 12px; font-size: 18px; text-align: center;
+    border-radius: 6px; border: 2px solid #ccc;
+  }
+  .hint { text-align:center; color:#555; font-size:14px; }
+
+  .footer { text-align:center; margin-top:10px; }
+  button { padding:10px 22px; background:#1c4fa1; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:14px; }
+
+  .result-page { display:none; }
+  .result-card {
+    max-width: 700px; margin: 60px auto; background:#ffffff;
+    border-radius: 12px; padding: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    text-align: center;
+  }
+  .result-card h2 { margin-top: 0; color:#1c4fa1; }
+  .score { font-size: 28px; font-weight: bold; margin: 10px 0; }
+  .mistakes { margin-top: 12px; text-align: left; display:inline-block; }
+</style>
+</head>
+<body>
+
+<!-- FRONT PAGE -->
+<div class="container front" id="frontPage">
+  <h1>Orientation – Spatial Awareness Test</h1>
+
+  <div class="card">
+    <h3>Overview</h3>
+    <p>
+      This assessment measures your ability to interpret aircraft instruments and determine spatial orientation.
+      You will be shown instrument panels and must select the correct aircraft orientation from four options.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Test Details</h3>
+    <ul>
+      <li>Time Limit: 7 minutes 30 seconds</li>
+      <li>Answer Format: Type the correct option number (1–4)</li>
+      <li>Navigation: Sequential (no going back)</li>
+      <li>Scoring: Percentage score shown at the end</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Instructions</h3>
+    <ul>
+      <li>Type 1–4 and press Continue for each question.</li>
+      <li>On the last question, click Submit to finish the test.</li>
+      <li>The test will also end if time runs out.</li>
+    </ul>
+  </div>
+
+  <button class="start-btn" onclick="startTest()">Start Test</button>
+</div>
+
+<!-- TEST PAGE -->
+<div class="container hidden" id="testPage">
+  <div class="header">
+    <div class="title">ORIENTATION – Spatial Awareness Test</div>
+    <div class="timer" id="timer">07:30</div>
+  </div>
+
+  <div class="question">
+    <div class="img-wrap">
+      <span class="img-badge" id="imgBadge">Q1</span>
+      <img id="questionImage" src="" alt="Question">
+    </div>
+  </div>
+
+  <div class="answer-box">
+    <input id="answerInput" type="number" min="1" max="4" placeholder="Type 1–4">
+  </div>
+  <div class="hint">Type your answer (1–4) and press Enter or Continue</div>
+
+  <div class="footer">
+    <button id="actionBtn" onclick="nextOrSubmit()">CONTINUE</button>
+  </div>
+</div>
+
+<!-- RESULT PAGE -->
+<div class="result-page" id="resultPage">
+  <div class="result-card">
+    <h2>Test Result</h2>
+    <div class="score" id="finalScore">Score: 0%</div>
+    <div id="finalTime">Time Taken: 0 min 0 sec</div>
+    <div class="mistakes" id="finalMistakes"></div>
+  </div>
+</div>
+
+<script>
+const answers = [
+  1,3,2,4,3,4,2,4,1,2,2,4,3,1,1,2,2,2,2,2,4,4,3,2,2,1,3,4,1,3,2,4,3,1,4,4,3,2
+];
+
+let questions = [];
+for (let i = 1; i <= 38; i++) {
+  questions.push({ img: `images/q${i}.jpg`, correct: answers[i-1], qno: i });
+}
+
+let index = 0, score = 0;
+let wrongList = [];
+let timeLeft = 450;
+let startTimestamp = null;
+let timerInterval = null;
+
+function startTest() {
+  document.getElementById("frontPage").classList.add("hidden");
+  document.getElementById("testPage").classList.remove("hidden");
+  startTimestamp = Date.now();
+  loadQuestion();
+  startTimer();
+  document.getElementById("answerInput").focus();
+}
+
+function loadQuestion() {
+  const q = questions[index];
+  document.getElementById("questionImage").src = q.img;
+  document.getElementById("imgBadge").innerText = `Q${q.qno}`;
+  document.getElementById("answerInput").value = "";
+  document.getElementById("answerInput").focus();
+  document.getElementById("actionBtn").textContent =
+    (index === questions.length - 1) ? "SUBMIT" : "CONTINUE";
+}
+
+function nextOrSubmit() {
+  const val = parseInt(document.getElementById("answerInput").value, 10);
+  if (![1,2,3,4].includes(val)) { alert("Type 1–4"); return; }
+
+  if (val === questions[index].correct) score++;
+  else wrongList.push({ q: questions[index].qno, correct: questions[index].correct });
+
+  if (index === questions.length - 1) endTest();
+  else { index++; loadQuestion(); }
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!document.getElementById("testPage").classList.contains("hidden") && e.key === "Enter") {
+    nextOrSubmit();
+  }
+});
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    let m = Math.floor(timeLeft / 60);
+    let s = timeLeft % 60;
+    document.getElementById("timer").innerText =
+      `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    if (timeLeft <= 0) endTest();
+  }, 1000);
+}
+
+function endTest() {
+  clearInterval(timerInterval);
+  const total = questions.length;
+  const percent = Math.round((score / total) * 100);
+  const timeTakenSec = Math.max(0, Math.floor((Date.now() - startTimestamp) / 1000));
+  const takenM = Math.floor(timeTakenSec / 60);
+  const takenS = timeTakenSec % 60;
+
+  document.getElementById("testPage").classList.add("hidden");
+  document.getElementById("resultPage").style.display = "block";
+
+  document.getElementById("finalScore").innerText = `Score: ${percent}% (${score}/${total})`;
+  document.getElementById("finalTime").innerText = `Time Taken: ${takenM} min ${takenS} sec`;
+  document.getElementById("finalMistakes").innerHTML =
+    wrongList.length
+      ? `<strong>Incorrect Questions (Correct Answers):</strong>
+         <ul>${wrongList.map(w => `<li>Q${w.q}: correct option ${w.correct}</li>`).join("")}</ul>`
+      : `<strong>Incorrect Questions:</strong> None`;
+}
+</script>
+
+</body>
+</html>

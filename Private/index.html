@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PILOT COMMAND // SECURE TERMINAL</title>
+    <style>
+        :root { --sky-deep: #0ea5e9; --sky-light: #bae6fd; --navy: #0f172a; }
+        body {
+            margin: 0; min-height: 100vh; font-family: 'Helvetica Neue', sans-serif;
+            background: linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-light) 100%);
+            display: flex; flex-direction: column; align-items: center; color: var(--navy);
+        }
+        .header-bar {
+            width: 100%; padding: 20px 40px; display: flex; justify-content: space-between;
+            align-items: center; background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.3);
+            box-sizing: border-box;
+        }
+        .logout-btn { color: #dc2626; text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1.5px solid #dc2626; padding: 8px 15px; border-radius: 4px; }
+        
+        .main-content { padding: 60px 20px; width: 90%; max-width: 1200px; text-align: center; }
+        h2 { color: white; letter-spacing: 12px; text-transform: uppercase; font-weight: 900; margin-bottom: 50px; text-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        .test-card {
+            background: rgba(255, 255, 255, 0.85); border-radius: 8px; padding: 45px 25px;
+            text-decoration: none; color: var(--navy); transition: 0.4s;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid white;
+            text-align: center;
+        }
+        .test-card:hover { transform: translateY(-10px); background: #ffffff; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .icon { font-size: 3rem; margin-bottom: 20px; opacity: 0.8; }
+        h3 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; text-transform: uppercase; font-weight: 800; }
+        .security-badge { font-size: 0.6rem; margin-top: 15px; display: inline-block; padding: 4px 10px; background: #e2e8f0; font-weight: 900; border-radius: 2px; }
+        .locked { background: #fee2e2; color: #991b1b; }
+
+        /* Decryption Modal */
+        #lockOverlay {
+            display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 1000;
+        }
+        .lock-box {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            background: white; padding: 50px; border-radius: 4px; width: 340px; text-align: center;
+        }
+        .lock-box input { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid #ddd; text-align: center; box-sizing: border-box; }
+        .unlock-btn { width: 100%; padding: 15px; background: var(--navy); color: white; border: none; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header-bar">
+        <div style="font-weight: 900; letter-spacing: 2px;">FLIGHT DECK✈ // SECURE </div>
+        <a href="/logout" class="logout-btn">TERMINATE SESSION</a>
+    </div>
+
+    <div class="main-content">
+        <h2>Test Terminal</h2>
+        <div class="test-grid">
+            <a href="/dashboard/multitasking.html" class="test-card">
+                <div class="icon">⌨️</div>
+                <h3>Multitasking</h3>
+                <span class="security-badge">AUTHORIZED</span>
+            </a>
+            <a href="/dashboard/Mathtest.html" class="test-card">
+                <div class="icon">🧮</div>
+                <h3>Math Aptitude</h3>
+                <span class="security-badge">AUTHORIZED</span>
+            </a>
+            <a href="/dashboard/PilotTest.html" class="test-card">
+                <div class="icon">🧠</div>
+                <h3>Memory Bank</h3>
+                <span class="security-badge">AUTHORIZED</span>
+            </a>
+            <a href="/dashboard/slalom.html" class="test-card">
+                <div class="icon">🕹️</div>
+                <h3>Slalom Logic</h3>
+                <span class="security-badge">AUTHORIZED</span>
+            </a>
+            <div class="test-card" style="cursor:pointer" onclick="showLock('/dashboard/spatial-test/index.html')">
+                <div class="icon">🧭</div>
+                <h3>Spatial Orientation</h3>
+                <span class="security-badge locked">ENCRYPTED</span>
+            </div>
+            <div class="test-card" style="cursor:pointer" onclick="showLock('/dashboard/Personalitytest.html')">
+                <div class="icon">🧑🏻‍✈️</div>
+                <h3>Personality Profile</h3>
+                <span class="security-badge locked">ENCRYPTED</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="lockOverlay">
+        <div class="lock-box">
+            <h3 style="margin:0;">SYSTEM LOCK</h3>
+            <p style="font-size: 0.7rem; color: #64748b; margin-top: 5px;">INTERNAL DECRYPTION KEY REQUIRED</p>
+            <form action="/verify-test" method="POST">
+                <input type="hidden" id="testTarget" name="testPath">
+                <input type="password" name="testPassword" placeholder="ACCESS KEY" required>
+                <button type="submit" class="unlock-btn">DECRYPT ACCESS</button>
+                <p onclick="document.getElementById('lockOverlay').style.display='none'" style="color:red; font-size:0.7rem; cursor:pointer; margin-top:20px;">ABORT</p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showLock(path) {
+            document.getElementById('testTarget').value = path;
+            document.getElementById('lockOverlay').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

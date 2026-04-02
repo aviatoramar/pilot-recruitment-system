@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slalom Tracking Test - Direct Input</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --primary: #d9534f;
+            --secondary: #337ab7;
+            --dark-panel: #2c3e50;
+            --text-main: #333;
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; color: var(--text-main);
+        }
+
+        #overview-screen {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+            z-index: 100; overflow-y: auto; padding-bottom: 50px;
+        }
+
+        .header-banner {
+            width: 100%; background: var(--dark-panel); color: white;
+            padding: 45px 0; text-align: center; margin-bottom: 40px;
+            border-bottom: 5px solid var(--primary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .header-banner h1 { margin: 0; font-size: 2.6rem; letter-spacing: 4px; font-weight: 800; }
+        .header-banner p { margin: 10px 0 0 0; opacity: 0.7; letter-spacing: 2px; font-size: 0.9rem; }
+
+        .container { width: 92%; max-width: 1150px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 35px; }
+
+        .card { background: white; border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; border: 1px solid #dee2e6; }
+        .card-header { 
+            background: #f8f9fa; padding: 18px 25px; font-weight: bold; 
+            border-bottom: 1px solid #eee; color: var(--dark-panel); 
+            display: flex; align-items: center; gap: 12px; letter-spacing: 0.5px;
+        }
+
+        .instruction-content { padding: 30px; line-height: 1.7; font-size: 0.95rem; }
+        .instruction-content h3 { margin-top: 0; color: var(--primary); font-size: 1.2rem; margin-bottom: 15px; }
+        
+        .spec-list { list-style: none; padding: 0; margin: 20px 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .spec-list li { background: #f1f5f9; padding: 10px; border-radius: 5px; font-size: 0.85rem; border-left: 3px solid var(--secondary); }
+
+        .preview-box { background: #333; height: 360px; position: relative; display: flex; justify-content: center; align-items: center; }
+        #previewCanvas { width: 100%; height: 100%; }
+
+        .btn-group { grid-column: span 2; display: flex; justify-content: center; margin-top: 30px; }
+        .btn {
+            padding: 20px 80px; border: none; border-radius: 6px; font-size: 1.2rem;
+            font-weight: bold; cursor: pointer; transition: 0.2s; color: white;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-test { background: var(--primary); box-shadow: 0 4px 0 #ac2925; }
+
+        #check-overlay {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(44, 62, 80, 0.98); color: white; padding: 45px; border-radius: 8px;
+            text-align: center; z-index: 60; border-top: 5px solid var(--secondary); min-width: 320px;
+        }
+
+        #result-screen {
+            display: none; position: absolute; width: 100%; height: 100%;
+            background: var(--bg-color); justify-content: center; align-items: center; z-index: 200;
+        }
+
+        #joy-status {
+            position: fixed; bottom: 20px; left: 20px; font-size: 0.8rem;
+            color: #777; background: rgba(255,255,255,0.8); padding: 5px 10px;
+            border-radius: 15px; border: 1px solid #ddd; z-index: 1000;
+        }
+
+        canvas { background-color: #cccccc; display: block; }
+    </style>
+</head>
+<body>
+
+<div id="joy-status">Flight Stick: Not Detected (Move the stick to sync)</div>
+
+<div id="overview-screen">
+    <div class="header-banner">
+        <h1>SLALOM TRACKING TEST</h1>
+        <p>FLIGHT APTITUDE & MOTOR CONTROL EVALUATION</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">TEST SPECIFICATIONS</div>
+            <div class="instruction-content">
+                <h3>Assessment Objective</h3>
+                <p>Maintain tracking through three 90-second parts. This mode uses <strong>Direct Mapping</strong>: your aircraft position mirrors your stick position exactly.</p>
+                <ul class="spec-list">
+                    <li><strong>Control:</strong> Direct Flight Stick</li>
+                    <li><strong>Path Type:</strong> Refined Pure Flow</li>
+                    <li><strong>Physics:</strong> Absolute Position</li>
+                    <li><strong>Parts:</strong> 3 x 90 Seconds</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">VISUAL TELEMETRY PREVIEW</div>
+            <div class="preview-box"><canvas id="previewCanvas"></canvas></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-test" onclick="initSession()">Begin Full Test</button>
+        </div>
+    </div>
+</div>
+
+<div id="check-overlay">
+    <div id="check-title" style="font-size: 1.1rem; letter-spacing: 2px; color: #5bc0de;">SYSTEM CHECK</div>
+    <div id="check-timer" style="font-size: 4rem; font-weight: 900;">10</div>
+    <p id="check-sub" style="font-size: 0.9rem; opacity: 0.8;"></p>
+</div>
+
+<div id="result-screen">
+    <div style="background:white; padding:70px; border-radius:15px; text-align:center; box-shadow: 0 20px 50px rgba(0,0,0,0.1);">
+        <h1>SESSION COMPLETE</h1>
+        <p>FINAL APTITUDE SCORE</p>
+        <h2 id="final-pct" style="font-size:6rem; color:var(--primary); font-weight: 900;">0</h2>
+        <button class="btn btn-test" onclick="location.reload()">Reset System</button>
+    </div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const preCanvas = document.getElementById('previewCanvas');
+    const preCtx = preCanvas.getContext('2d');
+    
+    let width, height, planeX = 0;
+    let totalFrames = 0, successfulFrames = 0;
+    let gameRunning = false, gates = [], currentPart = 1;
+    let isChecking = false, isResting = false, countdownVal = 10;
+    let timeLeftInPart = 90;
+    
+    let currentPathX = 0, pathVelocity = 0, pathTargetAngle = 0;
+
+    const VERTICAL_GAP = 32; const GATE_GAP = 85; 
+    const SQ_SIZE = 18; // Increased size
+    const START_SPEED = 2.8; let currentSpeed = START_SPEED;
+
+    // --- DIRECT MAPPING LOGIC ---
+    let gamepadIndex = null;
+
+    window.addEventListener("gamepadconnected", (e) => {
+        gamepadIndex = e.gamepad.index;
+        document.getElementById('joy-status').innerText = "Flight Stick: Connected (" + e.gamepad.id.substring(0,20) + ")";
+        document.getElementById('joy-status').style.color = "#2ecc71";
+    });
+
+    window.addEventListener("gamepaddisconnected", () => {
+        gamepadIndex = null;
+        document.getElementById('joy-status').innerText = "Flight Stick: Disconnected";
+        document.getElementById('joy-status').style.color = "#d9534f";
+    });
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        preCanvas.width = preCanvas.parentElement.clientWidth;
+        preCanvas.height = preCanvas.parentElement.clientHeight;
+        if (planeX === 0) planeX = width / 2;
+        if (currentPathX === 0) currentPathX = width / 2;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawAircraft(c, x, y, dim) {
+        c.save(); c.translate(x, y);
+        c.fillStyle = dim ? '#777' : '#1a1a1a';
+        c.fillRect(-1.5, -10, 3, 20); 
+        c.fillRect(-14, -2, 28, 3); 
+        c.fillRect(-6, 7, 12, 2); 
+        c.restore();
+    }
+
+    function initSession() {
+        document.getElementById('overview-screen').style.display = 'none';
+        currentPart = 1; totalFrames = 0; successfulFrames = 0;
+        startSequence(10, "Calibrating Direct Input...", false);
+    }
+
+    function startSequence(seconds, subText, resting) {
+        isChecking = !resting; isResting = resting;
+        countdownVal = seconds;
+        document.getElementById('check-title').innerText = resting ? "REST PHASE" : "SYSTEM CHECK";
+        document.getElementById('check-sub').innerText = subText;
+        document.getElementById('check-timer').innerText = countdownVal;
+        document.getElementById('check-overlay').style.display = 'block';
+        if (resting) gates = [];
+        
+        const countdownInterval = setInterval(() => {
+            countdownVal--;
+            document.getElementById('check-timer').innerText = countdownVal;
+            if (countdownVal <= 0) {
+                clearInterval(countdownInterval);
+                document.getElementById('check-overlay').style.display = 'none';
+                isChecking = false; isResting = false;
+                startPartRun();
+            }
+        }, 1000);
+    }
+
+    function startPartRun() {
+        timeLeftInPart = 90; currentSpeed = START_SPEED;
+        gameRunning = true;
+        const timerInterval = setInterval(() => {
+            if (timeLeftInPart > 0) {
+                timeLeftInPart--;
+                currentSpeed += (2.2 / 90); 
+            } else {
+                clearInterval(timerInterval);
+                if (currentPart < 3) {
+                    currentPart++;
+                    startSequence(20, "Relax. Part " + currentPart + " starting soon.", true);
+                } else {
+                    endSession();
+                }
+            }
+        }, 1000);
+    }
+
+    function endSession() {
+        gameRunning = false;
+        document.getElementById('result-screen').style.display = 'flex';
+        const rawPct = totalFrames > 0 ? (successfulFrames / totalFrames) : 0;
+        document.getElementById('final-pct').innerText = (rawPct * 7).toFixed(1);
+    }
+
+    function update() {
+        if (!gameRunning || isResting) return;
+
+        // HANDLE DIRECT MAPPING
+        if (gamepadIndex !== null) {
+            const gp = navigator.getGamepads()[gamepadIndex];
+            const axisValue = gp.axes[0]; // Raw stick position (-1 to 1)
+            
+            const playableWidth = width - 50; 
+            const centerX = width / 2;
+            
+            // Direct map: stick center (0) = screen center
+            planeX = centerX + (axisValue * (playableWidth / 2));
+            
+            // Safety bounds
+            planeX = Math.max(25, Math.min(width - 25, planeX));
+        } else {
+            // No input detected: plane stays in center
+            planeX = width / 2;
+        }
+
+        // PATH LOGIC
+        if (Math.random() < 0.05) pathTargetAngle = (Math.random() * 4 - 2);
+        pathVelocity += (pathTargetAngle - pathVelocity) * 0.05;
+        currentPathX += pathVelocity;
+
+        if (currentPathX < 280) pathTargetAngle += 0.15;
+        if (currentPathX > width - 280) pathTargetAngle -= 0.15;
+
+        if (gates.length === 0 || gates[gates.length - 1].y > VERTICAL_GAP) {
+            gates.push({ centerX: currentPathX, y: -50 });
+        }
+
+        gates.forEach(g => {
+            g.y += isChecking ? currentSpeed * 0.5 : currentSpeed;
+            if (!isChecking && g.y > height - 110 && g.y < height - 90) {
+                totalFrames++;
+                if (Math.abs(planeX - g.centerX) < (GATE_GAP / 2)) successfulFrames++;
+            }
+        });
+        gates = gates.filter(g => g.y < height + 50);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        if(!gameRunning) return;
+        gates.forEach(g => {
+            ctx.fillStyle = (isChecking || isResting) ? '#779977' : '#2ecc71'; 
+            ctx.fillRect(g.centerX - GATE_GAP/2 - SQ_SIZE/2, g.y - SQ_SIZE/2, SQ_SIZE, SQ_SIZE);
+            ctx.fillStyle = (isChecking || isResting) ? '#997777' : 'red';     
+            ctx.fillRect(g.centerX + GATE_GAP/2 - SQ_SIZE/2, g.y - SQ_SIZE/2, SQ_SIZE, SQ_SIZE);
+        });
+        drawAircraft(ctx, planeX, height - 100, (isChecking || isResting));
+    }
+
+    function loop() { update(); draw(); requestAnimationFrame(loop); }
+    loop();
+
+    function animatePreview() {
+        if (gameRunning) return;
+        preCtx.clearRect(0, 0, preCanvas.width, preCanvas.height);
+        const midX = preCanvas.width / 2; const midY = preCanvas.height / 2;
+        preCtx.fillStyle = '#2ecc71'; preCtx.fillRect(midX - GATE_GAP/2 - 9, midY - 60, SQ_SIZE, SQ_SIZE);
+        preCtx.fillStyle = 'red'; preCtx.fillRect(midX + GATE_GAP/2 - 9, midY - 60, SQ_SIZE, SQ_SIZE);
+        drawAircraft(preCtx, midX + Math.sin(Date.now()/500)*40, midY, false);
+        requestAnimationFrame(animatePreview);
+    }
+    animatePreview();
+</script>
+</body>
+</html>

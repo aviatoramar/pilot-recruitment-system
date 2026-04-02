@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multitasking Test - Pilot Assessment</title>
+    <style>
+        :root {
+            --bg-color: #e2e2d5;
+            --panel-bg: #1a1a1a;
+            --alert-area: #000;
+            --led-on: #ff0000;
+            --text-main: #ffffff;
+            --error-red: #ff3333;
+            --success-green: #00ff00;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #instructions-screen {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 50px;
+            max-width: 650px;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            position: absolute;
+            z-index: 200;
+        }
+
+        #instructions-screen h1 { 
+            text-align: center; 
+            color: #1a1a1a; 
+            margin-top: 0; 
+            font-weight: 800; 
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .instruction-box { 
+            background: rgba(255, 255, 255, 0.3); 
+            padding: 20px; 
+            border-left: 5px solid #1a1a1a; 
+            margin-bottom: 25px; 
+            border-radius: 0 12px 12px 0;
+            font-size: 1.05rem;
+            color: #333;
+        }
+
+        #countdown-screen, #break-screen, #end-screen {
+            display: none;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            position: absolute;
+            z-index: 200;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        #game-screen { display: none; width: 100%; height: 100%; position: relative; }
+
+        .corner-alert-area {
+            position: absolute;
+            top: 40px;
+            width: 100px; 
+            height: 100px; 
+            background: var(--alert-area);
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;      
+            padding: 8px; 
+            border: 2px solid #333;
+        }
+
+        #grid-left { left: calc(50% - min(42.5%, 600px)); }
+        #grid-right { right: calc(50% - min(42.5%, 600px)); }
+
+        .cell { width: 28px; height: 28px; background: transparent; margin: auto; }
+        .cell.active { background: var(--led-on); box-shadow: 0 0 8px rgba(255, 0, 0, 0.6); }
+
+        .panel-container {
+            display: flex; justify-content: space-between;
+            width: 85%; max-width: 1200px;
+            position: absolute; bottom: 80px; left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .panel {
+            background: var(--panel-bg); color: #fff; padding: 25px 35px;
+            border-radius: 8px; width: 340px; border: 3px solid #333;
+            transition: border-color 0.2s;
+        }
+
+        .row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; font-family: 'Courier New', monospace; font-size: 1rem; }
+        .val-display { background: #000; padding: 6px 15px; color: var(--text-main); min-width: 100px; text-align: right; border: 1px solid #222; font-size: 1.3rem; }
+
+        .btn-container { display: flex; gap: 15px; margin-top: 30px; }
+        .btn-start {
+            background: #1a1a1a;
+            color: white;
+            padding: 18px;
+            border: none;
+            flex: 1;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .btn-practice { background: rgba(0, 0, 0, 0.6); }
+        .btn-start:hover { background: #000; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        #countdown-number { font-size: 5rem; font-weight: bold; color: #222; }
+    </style>
+</head>
+<body>
+
+    <div id="instructions-screen">
+        <h1>Multitasking Test</h1>
+        <p style="text-align: center; margin-bottom: 25px;">Complete 3 flight phases. Precision and reaction time are critical.</p>
+        <div class="instruction-box">
+            <strong>Controls:</strong><br>
+            • <strong>Autopilot:</strong> Altitude (+/-), Heading (Arrows L/R), Speed (Arrows U/D)<br>
+            • <strong>Confirmation:</strong> Press <strong>Enter</strong> to submit settings<br>
+            • <strong>Alerts:</strong> Press <strong>Numpad (1-9)</strong> to clear red indicators
+        </div>
+        <div class="btn-container">
+            <button class="btn-start btn-practice" onclick="prepareCountdown('practice')">PRACTICE (5 MIN)</button>
+            <button class="btn-start" onclick="prepareCountdown('test')">START TEST (3 x 120s)</button>
+        </div>
+    </div>
+
+    <div id="countdown-screen">
+        <h2>GET READY</h2>
+        <div id="countdown-number">5</div>
+    </div>
+
+    <div id="break-screen">
+        <h2>Part Completed</h2>
+        <p>Prepare for the next phase...</p>
+        <div id="break-timer" style="font-size: 4rem; font-weight: bold; color: #e67e22;">20</div>
+    </div>
+
+    <div id="end-screen">
+        <h2>Assessment Results</h2>
+        <div style="margin: 20px 0; padding: 25px; background: rgba(255,255,255,0.5); border-radius: 15px;">
+            <div id="display-marks" style="font-size: 3rem; font-weight: bold; color: #222;">0.0 / 7</div>
+            <div id="display-percent" style="font-weight:bold; color:#d35400;">100% Accuracy</div>
+            <div id="display-attempts" style="margin-top:10px; color:#666;">Settings Validated: 0</div>
+        </div>
+        <button class="btn-start" onclick="location.reload()">RESTART</button>
+    </div>
+
+    <div id="game-screen">
+        <div class="corner-alert-area" id="grid-left">
+            <div class="cell" id="l7"></div><div class="cell" id="l8"></div><div class="cell" id="l9"></div>
+            <div class="cell" id="l4"></div><div class="cell" id="l5"></div><div class="cell" id="l6"></div>
+            <div class="cell" id="l1"></div><div class="cell" id="l2"></div><div class="cell" id="l3"></div>
+        </div>
+        <div class="corner-alert-area" id="grid-right">
+            <div class="cell" id="r7"></div><div class="cell" id="r8"></div><div class="cell" id="r9"></div>
+            <div class="cell" id="r4"></div><div class="cell" id="r5"></div><div class="cell" id="r6"></div>
+            <div class="cell" id="r1"></div><div class="cell" id="r2"></div><div class="cell" id="r3"></div>
+        </div>
+        <div class="panel-container">
+            <div class="panel" id="settings-panel">
+                <div class="row">ALTITUDE <span class="val-display" id="curr-alt">00000</span></div>
+                <div class="row">HEADING <span class="val-display" id="curr-hdg">000</span></div>
+                <div class="row">SPEED <span class="val-display" id="curr-spd">000</span></div>
+            </div>
+            <div class="panel">
+                <div class="row">ALTITUDE <span class="val-display" id="targ-alt">00000</span></div>
+                <div class="row">HEADING <span class="val-display" id="targ-hdg">000</span></div>
+                <div class="row">SPEED <span class="val-display" id="targ-spd">000</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // These sequences will repeat exactly at the start of Part 1, 2, and 3.
+        const ALT_SEQ = [1500, 3000, "same", "same", 6000, 12000, "same", 15000, "same", 11000, 3000, "same", 1500, 500];
+        const HDG_SEQ = [270, "same", 300, "same", "same", 325, 330, 340, 20, 135, 145, 180, 260, "same", 280];
+        const SPD_SEQ = [160, "same", "same", 210, 240, 250, 270, 310, "same", 280, 250, 210, 170, 130, "same"];
+
+        let mode = 'test', currentPhase = 1, timeLeft = 120, isPaused = true;
+        let current = { alt: 0, hdg: 0, spd: 0 }, target = { alt: 0, hdg: 0, spd: 0 };
+        let activeLightId = null, lightTimeout = null, totalPercentage = 100, attempts = 0, seqIndex = 0;
+
+        function prepareCountdown(m) {
+            mode = m;
+            document.getElementById('instructions-screen').style.display = 'none';
+            document.getElementById('countdown-screen').style.display = 'block';
+            let count = 5;
+            const countInt = setInterval(() => {
+                document.getElementById('countdown-number').innerText = --count;
+                if (count <= 0) { 
+                    clearInterval(countInt); 
+                    document.getElementById('countdown-screen').style.display = 'none'; 
+                    startMode(mode); 
+                }
+            }, 1000);
+        }
+
+        function startMode(m) {
+            timeLeft = (m === 'practice') ? 300 : 120;
+            resetSequence(); // Ensure starting from sequence 0
+            startPhase(1);
+        }
+
+        function resetSequence() {
+            seqIndex = 0;
+            // Initialize target values for the start of the sequence
+            target.alt = (ALT_SEQ[0] === "same") ? 0 : ALT_SEQ[0];
+            target.hdg = (HDG_SEQ[0] === "same") ? 0 : HDG_SEQ[0];
+            target.spd = (SPD_SEQ[0] === "same") ? 0 : SPD_SEQ[0];
+            
+            // Optionally reset current user values to zero at phase start
+            current = { alt: 0, hdg: 0, spd: 0 };
+            
+            updateTargetDisplay();
+            updateDisplay();
+        }
+
+        function startPhase(phase) {
+            currentPhase = phase;
+            if (mode === 'test') timeLeft = 120;
+            isPaused = false;
+            document.getElementById('break-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            if(phase === 1) gameTimerLoop();
+            setTimeout(spawnCycle, 1000);
+        }
+
+        function gameTimerLoop() {
+            setInterval(() => {
+                if (isPaused) return;
+                if (timeLeft > 0) timeLeft--;
+                else handlePhaseEnd();
+            }, 1000);
+        }
+
+        function handlePhaseEnd() {
+            isPaused = true; 
+            clearLight();
+            if (mode === 'test' && currentPhase < 3) {
+                document.getElementById('game-screen').style.display = 'none';
+                document.getElementById('break-screen').style.display = 'block';
+                
+                // CRITICAL: Reset the index and targets for the next part
+                resetSequence();
+                
+                let bTime = 20;
+                const bInt = setInterval(() => {
+                    document.getElementById('break-timer').innerText = --bTime;
+                    if (bTime <= 0) { 
+                        clearInterval(bInt); 
+                        startPhase(currentPhase + 1); 
+                    }
+                }, 1000);
+            } else showFinalScore();
+        }
+
+        function showFinalScore() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            let mark = ((Math.max(0, totalPercentage) / 100) * 7).toFixed(1);
+            document.getElementById('display-marks').innerText = `${mark} / 7`;
+            document.getElementById('display-percent').innerText = `${Math.max(0, totalPercentage).toFixed(0)}% Accuracy`;
+            document.getElementById('display-attempts').innerText = `Settings Validated: ${attempts}`;
+        }
+
+        function spawnCycle() {
+            if (isPaused) return;
+            activeLightId = (Math.random() > 0.5 ? 'r' : 'l') + (Math.floor(Math.random() * 9) + 1);
+            document.getElementById(activeLightId).classList.add('active');
+            lightTimeout = setTimeout(() => { 
+                totalPercentage -= 2; 
+                clearLight(); 
+                setTimeout(spawnCycle, 2000); 
+            }, 3000);
+        }
+
+        function clearLight() {
+            if (activeLightId) { 
+                document.getElementById(activeLightId).classList.remove('active'); 
+                activeLightId = null; 
+                clearTimeout(lightTimeout); 
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (isPaused) return;
+            if (e.key >= '1' && e.key <= '9') {
+                if (activeLightId && activeLightId.endsWith(e.key)) { 
+                    clearLight(); 
+                    setTimeout(spawnCycle, 2000); 
+                } else {
+                    totalPercentage -= 1;
+                }
+            }
+            if (e.key === '+' || e.key === '=') current.alt += 500;
+            if (e.key === '-' || e.key === '_') current.alt = Math.max(0, current.alt - 500);
+            if (e.key === 'ArrowRight') current.hdg = (current.hdg + 5) % 360;
+            if (e.key === 'ArrowLeft') current.hdg = (current.hdg - 5 + 360) % 360;
+            if (e.key === 'ArrowUp') current.spd += 10;
+            if (e.key === 'ArrowDown') current.spd = Math.max(0, current.spd - 10);
+            if (e.key === 'Enter') validateSettings();
+            updateDisplay();
+        });
+
+        function validateSettings() {
+            attempts++;
+            const correct = (current.alt === target.alt && current.hdg === target.hdg && current.spd === target.spd);
+            const panel = document.getElementById('settings-panel');
+            if (!correct) totalPercentage -= 4;
+            panel.style.borderColor = correct ? "var(--success-green)" : "var(--error-red)";
+            setTimeout(() => { 
+                panel.style.borderColor = "#333"; 
+                seqIndex++; 
+                generateNewTarget(); 
+            }, 400);
+        }
+
+        function generateNewTarget() {
+            let idx = seqIndex % ALT_SEQ.length;
+            if (ALT_SEQ[idx] !== "same") target.alt = ALT_SEQ[idx];
+            if (HDG_SEQ[idx] !== "same") target.hdg = HDG_SEQ[idx];
+            if (SPD_SEQ[idx] !== "same") target.spd = SPD_SEQ[idx];
+            updateTargetDisplay();
+        }
+
+        function updateTargetDisplay() {
+            document.getElementById('targ-alt').innerText = target.alt.toString().padStart(5, '0');
+            document.getElementById('targ-hdg').innerText = target.hdg.toString().padStart(3, '0');
+            document.getElementById('targ-spd').innerText = target.spd.toString().padStart(3, '0');
+        }
+
+        function updateDisplay() {
+            document.getElementById('curr-alt').innerText = current.alt.toString().padStart(5, '0');
+            document.getElementById('curr-hdg').innerText = current.hdg.toString().padStart(3, '0');
+            document.getElementById('curr-spd').innerText = current.spd.toString().padStart(3, '0');
+        }
+    </script>
+</body>
+</html>
