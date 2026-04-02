@@ -7,41 +7,49 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser('pilot-secret-key-35000ft'));
 
-// Protection Middleware
+// Middleware to protect private routes
 const protect = (req, res, next) => {
     if (req.signedCookies.session === 'verified') return next();
     res.redirect('/');
 };
 
-/** * SMART PATH RESOLVER
- * This checks if your folders are 'Public' or 'public' 
- * to prevent the ENOENT error on Render.
+/**
+ * AUTO-PATH DETECTOR
+ * This looks for your folders in the root or /src, and 
+ * handles both 'Public' and 'public' naming.
  */
-const getFolderPath = (name) => {
-    const capsPath = path.resolve(__dirname, name.charAt(0).toUpperCase() + name.slice(1));
-    const lowerPath = path.resolve(__dirname, name.toLowerCase());
-    return fs.existsSync(capsPath) ? capsPath : lowerPath;
-};
+function findFolder(name) {
+    const targets = [
+        path.join(__dirname, name),
+        path.join(__dirname, name.toLowerCase()),
+        path.join(__dirname, name.charAt(0).toUpperCase() + name.slice(1)),
+        path.join(process.cwd(), name),
+        path.join(process.cwd(), 'src', name)
+    ];
+    
+    for (const target of targets) {
+        if (fs.existsSync(target)) return target;
+    }
+    return null;
+}
 
-const PUBLIC_DIR = getFolderPath('public');
-const PRIVATE_DIR = getFolderPath('private');
+const PUBLIC_DIR = findFolder('public');
+const PRIVATE_DIR = findFolder('private');
 
-// Debugging: This will show in your Render logs so we can see what it found
-console.log(`System Root: ${__dirname}`);
-console.log(`Resolved Public Path: ${PUBLIC_DIR}`);
-console.log(`Resolved Private Path: ${PRIVATE_DIR}`);
+// Log findings to Render console for debugging
+console.log(`Detected Public Folder: ${PUBLIC_DIR}`);
+console.log(`Detected Private Folder: ${PRIVATE_DIR}`);
 
-// Serve Login Page
+// 1. Serve Login Page
 app.get('/', (req, res) => {
-    const indexPath = path.join(PUBLIC_DIR, 'index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+    if (PUBLIC_DIR) {
+        res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
     } else {
-        res.status(404).send("Critical Error: index.html not found in Public folder.");
+        res.status(500).send("System Error: Public directory not found.");
     }
 });
 
-// Login Logic
+// 2. Login Handler
 app.post('/login', (req, res) => {
     if (req.body.password === "Aviator01@") {
         res.cookie('session', 'verified', { httpOnly: true, signed: true, sameSite: 'strict' });
@@ -51,7 +59,7 @@ app.post('/login', (req, res) => {
     }
 });
 
-// Test Verification
+// 3. Test Verification
 app.post('/verify-test', (req, res) => {
     if (req.body.testPassword === "pilot77") { 
         res.redirect(req.body.testPath);
@@ -60,10 +68,12 @@ app.post('/verify-test', (req, res) => {
     }
 });
 
-// Secure Dashboard
-app.use('/dashboard', protect, express.static(PRIVATE_DIR));
+// 4. Secure Dashboard Static Assets
+if (PRIVATE_DIR) {
+    app.use('/dashboard', protect, express.static(PRIVATE_DIR));
+}
 
-// Logout
+// 5. Logout
 app.get('/logout', (req, res) => {
     res.clearCookie('session');
     res.redirect('/');
@@ -71,5 +81,7 @@ app.get('/logout', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`PILOT TERMINAL ACTIVE ON PORT: ${PORT}`);
+    console.log('---------------------------------------------');
+    console.log(`PILOT TERMINAL STABILIZED ON PORT: ${PORT}`);
+    console.log('---------------------------------------------');
 });
