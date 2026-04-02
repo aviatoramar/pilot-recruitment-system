@@ -1,87 +1,100 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const fs = require('fs');
 const app = express();
 
+// Middleware to handle form data and cookies
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser('pilot-secret-key-35000ft'));
+app.use(cookieParser('pilot-secret-key-35000ft')); // Secret key for signed cookies
 
-// Middleware to protect private routes
+/**
+ * 1. THE SECURITY GUARD (Middleware)
+ * This checks if the user has a valid session badge.
+ * If not, it blocks access to the private folder.
+ */
 const protect = (req, res, next) => {
-    if (req.signedCookies.session === 'verified') return next();
+    if (req.signedCookies.session === 'verified') {
+        return next();
+    }
+    // No valid session? Send them back to the public login page
     res.redirect('/');
 };
 
 /**
- * AUTO-PATH DETECTOR
- * This looks for your folders in the root or /src, and 
- * handles both 'Public' and 'public' naming.
+ * 2. PUBLIC ROUTES
+ * These are visible to everyone.
  */
-function findFolder(name) {
-    const targets = [
-        path.join(__dirname, name),
-        path.join(__dirname, name.toLowerCase()),
-        path.join(__dirname, name.charAt(0).toUpperCase() + name.slice(1)),
-        path.join(process.cwd(), name),
-        path.join(process.cwd(), 'src', name)
-    ];
-    
-    for (const target of targets) {
-        if (fs.existsSync(target)) return target;
-    }
-    return null;
-}
 
-const PUBLIC_DIR = findFolder('public');
-const PRIVATE_DIR = findFolder('private');
-
-// Log findings to Render console for debugging
-console.log(`Detected Public Folder: ${PUBLIC_DIR}`);
-console.log(`Detected Private Folder: ${PRIVATE_DIR}`);
-
-// 1. Serve Login Page
+// Show the light-themed login page
 app.get('/', (req, res) => {
-    if (PUBLIC_DIR) {
-        res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-    } else {
-        res.status(500).send("System Error: Public directory not found.");
-    }
+    res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// 2. Login Handler
+// Handle the main login
 app.post('/login', (req, res) => {
-    if (req.body.password === "Aviator01@") {
-        res.cookie('session', 'verified', { httpOnly: true, signed: true, sameSite: 'strict' });
+    const { username, password } = req.body;
+
+    // Check for the required password. Accepts any Pilot Name.
+    if (password === "Aviator01@") {
+        // Set a session cookie that expires when the browser/tab is closed
+        res.cookie('session', 'verified', { 
+            httpOnly: true, 
+            signed: true,
+            sameSite: 'strict' 
+        });
         res.redirect('/dashboard/index.html');
     } else {
-        res.send("Invalid Key. <a href='/'>Retry</a>");
+        res.send(`
+            <div style="font-family:sans-serif; text-align:center; margin-top:50px;">
+                <h2 style="color:red;">INVALID ACCESS KEY</h2>
+                <a href="/">Return to Login</a>
+            </div>
+        `);
     }
 });
 
-// 3. Test Verification
+/**
+ * 3. INTERNAL TEST ENCRYPTION
+ * This handles the second password for Spatial and Personality tests.
+ */
 app.post('/verify-test', (req, res) => {
-    if (req.body.testPassword === "pilot77") { 
-        res.redirect(req.body.testPath);
+    const { testPath, testPassword } = req.body;
+    
+    // Internal Password for specific high-security tests
+    if (testPassword === "pilot77") { 
+        res.redirect(testPath);
     } else {
-        res.send("Invalid Test Key. <a href='/dashboard/index.html'>Back</a>");
+        res.send(`
+            <div style="font-family:sans-serif; text-align:center; margin-top:50px; background:#f8d7da; padding:20px;">
+                <h2 style="color:#721c24;">INTERNAL DECRYPTION FAILED</h2>
+                <p>The provided Test Key is incorrect.</p>
+                <a href="/dashboard/index.html">Back to Dashboard</a>
+            </div>
+        `);
     }
 });
 
-// 4. Secure Dashboard Static Assets
-if (PRIVATE_DIR) {
-    app.use('/dashboard', protect, express.static(PRIVATE_DIR));
-}
+/**
+ * 4. SECURE PRIVATE FOLDER
+ * The 'protect' middleware ensures only logged-in pilots can see these files.
+ */
+app.use('/dashboard', protect, express.static(path.join(__dirname, 'private')));
 
-// 5. Logout
+/**
+ * 5. LOGOUT / TERMINATE SESSION
+ * Destroys the cookie and forces a fresh login.
+ */
 app.get('/logout', (req, res) => {
     res.clearCookie('session');
     res.redirect('/');
 });
 
-const PORT = process.env.PORT || 3000;
+// Start the server
+const PORT = 3000;
 app.listen(PORT, () => {
     console.log('---------------------------------------------');
-    console.log(`PILOT TERMINAL STABILIZED ON PORT: ${PORT}`);
+    console.log(`PILOT TERMINAL ACTIVE AT: http://localhost:${PORT}`);
+    console.log('MAIN PASSWORD: Aviator01@');
+    console.log('INTERNAL TEST KEY: pilot77');
     console.log('---------------------------------------------');
 });
